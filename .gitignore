@@ -1,0 +1,27 @@
+# Exclude data folder
+data/
+
+# Exclude elastix folder
+elastix/
+
+# Exclude ExpectationMaximization folder
+ExpectationMaximization/
+
+# Exclude common temporary files
+*.pyc
+*.pyo
+*.log
+*.tmp
+*.bak
+*.swp
+.DS_Store
+
+# Exclude virtual environment folders
+env/
+venv/
+
+# Exclude Jupyter notebook checkpoints
+.ipynb_checkpoints/
+
+# Exclude system-specific files
+Thumbs.db
