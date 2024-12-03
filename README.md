@@ -16,16 +16,35 @@ Multi-Atlas Segmentation is an advanced technique for labeling regions in biomed
 
 ## **File Structure**
 
-- `data/`: Dataset storage (raw and processed).
-- `notebooks/`: Jupyter Notebooks for data exploration and experiments.
-- `src/`: Core implementation of segmentation and label fusion.
-  - `atlas/`: Atlas creation and registration scripts.
-  - `segmentation/`: Segmentation and label fusion logic.
-  - `evaluation/`: Evaluation scripts for segmentation performance.
-  - `utils/`: Helper functions.
-- `tests/`: Unit tests for core functions.
-- `docs/`: Documentation and project reports.
-- `scripts/`: Shell scripts for automation.
+├── data/
+│   ├── raw/                     # Original raw data
+│   ├── processed/               # Registered images and TransformParameters
+│   ├── transformed_labels/      # Transformed labels for each fixed image
+│   └── window_based/            # Intermediate and final results from window-based segmentation
+│       ├── IBSR_11_fused.nii.gz # Example fused output for IBSR_11
+├── notebooks/                   # Jupyter notebooks for visualization and analysis
+├── src/                         # Source code for functionalities
+│   ├── atlas/                   # Atlas-related code
+│   ├── segmentation/
+│   │   ├── fusion_methods.py         # Fusion strategies (majority voting, weighted voting, etc.)
+│   │   ├── label_fusion_pipeline.py  # Label fusion pipeline logic
+│   │   ├── window_segmentation.py    # Window-based segmentation pipeline
+│   └── evaluation/
+│   │   └── metrics.py               # Evaluation metrics (Dice, Hausdorff, etc.)
+│   └── utils/
+│       ├── helpers.py               # General utilities (loading, saving, etc.)
+│       └── sliding_window.py        # Logic for window extraction and merging
+├── tests/                       # Unit tests for core functions
+│   ├── test_fusion_methods.py       # Tests for fusion methods
+│   ├── test_sliding_window.py       # Tests for sliding window logic
+│   └── test_window_segmentation.py  # Tests for window segmentation pipeline
+├── scripts/                     # Automation scripts
+│   ├── run_elastix.sh                  # Registration script
+│   ├── transform_labels.sh             # Transform labels using transformix
+│   ├── window_segmentation_runner.py   # End-to-end script for window-based segmentation
+├── README.md                    # Project description and instructions
+├── requirements.txt             # Project dependencies
+└── .gitignore                   # Ignored files/folders
 
 ## **Requirements**
 - Python 3.8 or higher
