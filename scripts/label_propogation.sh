@@ -47,7 +47,7 @@ for fixed_folder in "$fixed_image_dir"IBSR_*; do
         fi
 
         # Define output for transformed label
-        transformed_label_output="$specific_label_output_dir/${moving_base}_to_${fixed_base}_seg.nii.gz"
+        transformed_label_output_base="$specific_label_output_dir/${moving_base}_to_${fixed_base}_seg"
 
         # Run transformix to apply the transformation to the label file
         "$transformix_path" \
@@ -55,9 +55,10 @@ for fixed_folder in "$fixed_image_dir"IBSR_*; do
             -out "$specific_label_output_dir" \
             -tp "$transform_param_file"
 
-        # Move the resulting label file to the final output path
-        mv "$specific_label_output_dir/deformationField.nii" "$transformed_label_output"
+        # Move the resulting files (result.hdr and result.img) to the final output path
+        mv "$specific_label_output_dir/result.hdr" "${transformed_label_output_base}.hdr"
+        mv "$specific_label_output_dir/result.img" "${transformed_label_output_base}.img"
 
-        echo "Transformed label for $moving_base -> $fixed_base saved to $transformed_label_output"
+        echo "Transformed label for $moving_base -> $fixed_base saved as ${transformed_label_output_base}.hdr and ${transformed_label_output_base}.img"
     done
 done
