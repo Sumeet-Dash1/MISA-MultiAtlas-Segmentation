@@ -4,7 +4,7 @@ from src.evaluation.metrics import compute_dice_coefficient
 
 
 class LabelFusionPipeline:
-    def __init__(self, fixed_image, transformed_labels_dir, reference_image_path):
+    def __init__(self, fixed_image, transformed_labels = None, transformed_labels_dir = None, reference_image_path = None):
         """
         Initialize the label fusion pipeline.
         Parameters:
@@ -15,7 +15,7 @@ class LabelFusionPipeline:
         self.fixed_image = fixed_image
         self.transformed_labels_dir = transformed_labels_dir
         self.reference_image_path = reference_image_path
-        self.transformed_labels = None
+        self.transformed_labels = transformed_labels
         self.fused_label = None
 
     def load_transformed_labels(self):
@@ -77,7 +77,7 @@ class LabelFusionPipeline:
             raise ValueError("Fused label not available. Call apply_fusion() first.")
 
         # Load reference image for metadata
-        reference_img = nib.load(self.reference_image_path)
+        reference_img = nib.load(self.fixed_image)
 
         # Save the fused label map
         fused_img = nib.Nifti1Image(self.fused_label.astype(np.int16), reference_img.affine)
