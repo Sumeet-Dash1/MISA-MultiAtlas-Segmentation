@@ -1,9 +1,9 @@
 # Set paths and parameter files
-fixed_image_dir="../Data/Validation_Set/"
-moving_image_dir="../Data/Training_Set/"
-output_dir="../Data/processed/"
+fixed_image_dir="../Data/SPM/Input/Validation_Set/"
+moving_image_dir="../Data/SPM/Input/Training_Set/"
+output_dir="../Data/SPM/processed_update/"
 param_affine="./Par0009/Parameters.Par0009.affine.txt"
-param_elastic="./Par0009/Parameters.Par0009.elastic.txt"
+param_elastic="./Par0009/Parameters.custom.elastic.txt"
 
 # Create the output directory if it doesn't exist
 mkdir -p "$output_dir"
@@ -11,7 +11,7 @@ mkdir -p "$output_dir"
 # Loop through each fixed image (validation set)
 for fixed_folder in "$fixed_image_dir"IBSR_*; do
     # Define the fixed image path
-    fixed_image="$fixed_folder/$(basename "$fixed_folder").nii.gz"
+    fixed_image="$fixed_folder/m$(basename "$fixed_folder").nii"
 
     # Check if the fixed image file exists
     if [[ ! -f "$fixed_image" ]]; then
@@ -22,7 +22,7 @@ for fixed_folder in "$fixed_image_dir"IBSR_*; do
     # Loop through each moving image (training set)
     for moving_folder in "$moving_image_dir"IBSR_*; do
         # Define the moving image path
-        moving_image="$moving_folder/$(basename "$moving_folder").nii.gz"
+        moving_image="$moving_folder/m$(basename "$moving_folder").nii"
 
         # Check if the moving image file exists
         if [[ ! -f "$moving_image" ]]; then

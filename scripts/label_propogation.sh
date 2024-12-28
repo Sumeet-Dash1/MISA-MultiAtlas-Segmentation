@@ -1,8 +1,8 @@
 # Set directories
-fixed_image_dir="../Data/Validation_Set/"
-moving_image_dir="../Data/Training_Set/"
-registration_output_dir="../Data/processed"
-label_output_dir="../Data/transformed_labels/"
+fixed_image_dir="../Data/SPM/Input/Validation_Set/"
+moving_image_dir="../Data/SPM/Input/Training_Set/"
+registration_output_dir="../Data/SPM/processed_update/"
+label_output_dir="../Data/transformed_labels_update/"
 transformix_path="../elastix/transformix"
 
 # Create the label output directory if it doesn't exist
@@ -29,7 +29,7 @@ for fixed_folder in "$fixed_image_dir"IBSR_*; do
         fi
 
         # Path to the labels file for the moving image
-        moving_label="$moving_folder/${moving_base}_seg.nii.gz"
+        moving_label="$moving_folder/${moving_base}_seg.nii"
 
         # Check if the labels file exists
         if [[ ! -f "$moving_label" ]]; then

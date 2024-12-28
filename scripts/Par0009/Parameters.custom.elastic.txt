@@ -1,0 +1,69 @@
+// Updated Parameter file for B-Spline registration
+
+// Internal pixel type for computations
+(FixedInternalImagePixelType "float")
+(MovingInternalImagePixelType "float")
+
+// Dimensions of the fixed and moving images
+(FixedImageDimension 3)
+(MovingImageDimension 3)
+
+// Components
+(Registration "MultiResolutionRegistration")
+(FixedImagePyramid "FixedRecursiveImagePyramid")
+(MovingImagePyramid "MovingRecursiveImagePyramid")
+(Interpolator "BSplineInterpolator")
+(ResampleInterpolator "FinalBSplineInterpolator")
+(Resampler "DefaultResampler")
+
+// Optimizer, Transform, and Metric
+(Optimizer "QuasiNewtonLBFGS")
+(Transform "BSplineTransform")
+(Metric "AdvancedMattesMutualInformation")
+
+// Number of resolutions
+(NumberOfResolutions 4) // Increased from 3 for better multiresolution accuracy
+
+// Resulting image pixel type
+(ResultImagePixelType "short")
+
+// Mask erosion settings
+(ErodeMask "false" "false" "false" "false")
+
+// Combine transforms
+(HowToCombineTransforms "Compose")
+
+// Final B-Spline grid spacing for deformation field
+(FinalGridSpacing 6.0 6.0 6.0) // Reduced spacing for finer deformation control
+(UpsampleGridOption "true")
+
+// Number of spatial samples for mutual information
+(NumberOfSpatialSamples 30000 50000 100000 150000) // Increased for better metric estimation
+
+// Refresh spatial samples every iteration
+(NewSamplesEveryIteration "true" "true" "true" "true")
+(ImageSampler "Random")
+
+// Number of histogram bins for mutual information
+(NumberOfHistogramBins 32 64 64 64) // Improved histogram resolution for better metric accuracy
+
+// B-Spline interpolation orders
+(BSplineInterpolationOrder 3 3 3 3) // Increased order for smoother transformations
+(FinalBSplineInterpolationOrder 3)
+
+// Default pixel value for out-of-bounds pixels
+(DefaultPixelValue 0)
+
+// QuasiNewtonLBFGS optimizer settings
+(MaximumNumberOfIterations 200 150 100 50) // Increased iterations for convergence in finer resolutions
+(StepLength 1.5 1.0 0.5 0.1) // Adjusted for smoother optimization
+
+(LineSearchValueTolerance 0.001 0.0001 0.00001 0.00001)
+(LineSearchGradientTolerance 0.7 0.7 0.5 0.5)
+(GradientMagnitudeTolerance 0.00001 0.000001 0.0000005 0.0000005) // More precise stopping criteria
+(LBFGSUpdateAccuracy 15 30 50 50) // Increased memory for better Hessian approximation
+
+(StopIfWolfeNotSatisfied "true")
+
+// Result image format
+(ResultImageFormat "hdr")
