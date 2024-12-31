@@ -3,8 +3,8 @@ import gzip
 import shutil
 
 # Source and destination directories
-source_dir = "/Users/sumeetdash/MAIA/Semester_3/CODES/MISA/Final_Project/MISA-MultiAtlas-Segmentation/Data/Test_Set"
-destination_dir = "/Users/sumeetdash/MAIA/Semester_3/CODES/MISA/Final_Project/MISA-MultiAtlas-Segmentation/Data/SPM/Input/Test_Set"
+source_dir = "/Users/sumeetdash/MAIA/Semester_3/CODES/MISA/Final_Project/MISA-MultiAtlas-Segmentation/Data/Training_Set"
+destination_dir = "/Users/sumeetdash/MAIA/Semester_3/CODES/MISA/Final_Project/MISA-MultiAtlas-Segmentation/Data/SPM/Input/Training_Set"
 
 def decompress_nii_gz(source_path, dest_path):
     """Decompress a .nii.gz file and save it as .nii"""
