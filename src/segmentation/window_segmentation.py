@@ -1,4 +1,5 @@
 import numpy as np
+from src.utils.helpers import compute_mutual_information
 
 def compute_weights(fixed_image, registered_images, window_coords, window_size, metric="ncc"):
     """
@@ -22,12 +23,18 @@ def compute_weights(fixed_image, registered_images, window_coords, window_size, 
         registered_window = registered[x:x + ww, y:y + wh, z:z + wd]
 
         if metric == "ncc":
-            weight = np.corrcoef(fixed_window.ravel(), registered_window.ravel())[0, 1]
+            # Check for zero variance
+            if np.std(fixed_window.ravel()) == 0 or np.std(registered_window.ravel()) == 0:
+                weight = 0  # Assign default weight
+            else:
+                weight = np.corrcoef(fixed_window.ravel(), registered_window.ravel())[0, 1]
         elif metric == "mse":
             weight = -np.mean((fixed_window - registered_window) ** 2)  # Lower MSE is better
         elif metric == "entropy":
             p = np.histogram(registered_window, bins=256, density=True)[0]
             weight = -np.sum(p * np.log(p + 1e-10))  # Lower entropy is better
+        elif metric == "mi":
+            weight = compute_mutual_information(fixed_window, registered_window)
         else:
             raise ValueError(f"Unknown metric: {metric}")
 
@@ -38,7 +45,7 @@ def compute_weights(fixed_image, registered_images, window_coords, window_size, 
     weights = (weights - weights.min()) / (weights.max() - weights.min() + 1e-10)
     return weights
 
-from src.utils.sliding_window import extract_windows, merge_windows
+from src.utils.sliding_window import extract_windows_vectorized, merge_windows
 
 def fuse_window(window_labels, weights, fusion_strategy="weighted_vote"):
     """
@@ -53,11 +60,17 @@ def fuse_window(window_labels, weights, fusion_strategy="weighted_vote"):
     from src.segmentation.fusion_methods import majority_vote, weighted_vote
 
     if fusion_strategy == "majority_vote":
-        return majority_vote(window_labels)
+        fused = majority_vote(window_labels)
     elif fusion_strategy == "weighted_vote":
-        return weighted_vote(window_labels, weights)
+        fused = weighted_vote(window_labels, weights)
     else:
         raise ValueError(f"Unknown fusion strategy: {fusion_strategy}")
+
+    # Ensure fused window matches the original window shape
+    if fused.ndim != 3:
+        raise ValueError(f"Fused window has incorrect dimensions: {fused.shape}")
+    return fused
+    
 
 def window_based_segmentation(fixed_image, registered_images, label_maps, window_size, stride, fusion_strategy, metric):
     """
@@ -74,7 +87,7 @@ def window_based_segmentation(fixed_image, registered_images, label_maps, window
         np.ndarray: Final fused label map.
     """
     # Extract windows and coordinates
-    windows, coords = extract_windows(fixed_image, window_size, stride)
+    windows, coords = extract_windows_vectorized(fixed_image, window_size, stride)
 
     # Fuse windows
     fused_windows = []

@@ -4,53 +4,6 @@
 import nibabel as nib
 import numpy as np
 
-def compute_dice_coefficient(seg1, seg2):
-    """Compute Dice Similarity Coefficient between two binary masks."""
-    intersection = np.sum((seg1 > 0) & (seg2 > 0))
-    return 2 * intersection / (np.sum(seg1 > 0) + np.sum(seg2 > 0))
-
-def calculate_dice_score(img1_data, img2_data, ignore_background=True):
-    """
-    Calculate the Dice score between two NIfTI images.
-    
-    Parameters:
-    nii_image1(np.ndarray:): first NIfTI image (e.g., ground truth).
-    nii_image2 (np.ndarray:): second NIfTI image (e.g., predicted labels).
-    ignore_background (bool): Whether to ignore the background label (default: True).
-    
-    Returns:
-    dice_scores (dict): Dictionary of Dice scores for each label present in the images.
-    """    
-    # Ensure the two images have the same shape
-    if img1_data.shape != img2_data.shape:
-        raise ValueError("The two NIfTI images must have the same shape.")
-    
-    # Calculate the Dice score for each label
-    dice_scores = {}
-    labels = np.unique(img1_data)  # Find all unique labels in the first image
-    
-    for label in labels:
-        if label == 0 and ignore_background:
-            continue  # Skip background (assuming label 0 is background)
-        
-        # Create binary masks for the current label in both images
-        img1_mask = (img1_data == label)
-        img2_mask = (img2_data == label)
-        
-        # Calculate the intersection and union
-        intersection = np.sum(img1_mask & img2_mask)
-        union = np.sum(img1_mask) + np.sum(img2_mask)
-        
-        # Calculate Dice score (handle division by zero)
-        if union == 0:
-            dice_score = 1.0  # Perfect match if both masks are empty
-        else:
-            dice_score = (2. * intersection) / union
-        
-        # Store the Dice score for the current label
-        dice_scores[label] = dice_score
-    
-    return dice_scores
 
 def normalize_image(image):
     """Normalize image intensities to zero mean and unit variance."""
@@ -97,3 +50,27 @@ def compute_correlation_weights(fixed_image, registered_images):
     weights = np.array(correlations) / (np.sum(correlations) + 1e-10)
 
     return weights
+
+def compute_mutual_information(fixed_window, registered_window, bins=256):
+    """
+    Compute the mutual information between two image windows.
+    Parameters:
+        fixed_window (np.ndarray): The fixed (reference) image window.
+        registered_window (np.ndarray): The registered atlas image window.
+        bins (int): Number of bins for the joint histogram.
+    Returns:
+        float: The mutual information value.
+    """
+    # Joint histogram
+    joint_hist, _, _ = np.histogram2d(fixed_window.ravel(), registered_window.ravel(), bins=bins, density=True)
+
+    # Marginal histograms
+    p_fixed = np.sum(joint_hist, axis=1)
+    p_registered = np.sum(joint_hist, axis=0)
+
+    # Compute mutual information
+    p_joint = joint_hist + 1e-10  # Avoid division by zero
+    p_fixed = p_fixed + 1e-10
+    p_registered = p_registered + 1e-10
+    mutual_info = np.sum(p_joint * np.log(p_joint / (p_fixed[:, None] * p_registered[None, :])))
+    return mutual_info

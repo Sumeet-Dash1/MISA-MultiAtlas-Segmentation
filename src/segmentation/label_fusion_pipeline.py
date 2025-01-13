@@ -1,10 +1,9 @@
 import numpy as np
 import nibabel as nib
-from src.evaluation.metrics import compute_dice_coefficient
-
+from src.evaluation.metrics import calculate_dice_score
 
 class LabelFusionPipeline:
-    def __init__(self, fixed_image, transformed_labels = None, transformed_labels_dir = None, reference_image_path = None):
+    def __init__(self, fixed_image, transformed_labels = None, transformed_labels_dir = None, reference_image_path = None, prob = False):
         """
         Initialize the label fusion pipeline.
         Parameters:
@@ -16,6 +15,7 @@ class LabelFusionPipeline:
         self.transformed_labels_dir = transformed_labels_dir
         self.reference_image_path = reference_image_path
         self.transformed_labels = transformed_labels
+        self.fused_probabilities = None
         self.fused_label = None
 
     def load_transformed_labels(self):
@@ -33,7 +33,7 @@ class LabelFusionPipeline:
         self.transformed_labels = labels
         print(f"Loaded {len(self.transformed_labels)} transformed labels.")
 
-    def apply_fusion(self, fusion_strategy):
+    def apply_fusion(self, fusion_strategy, prob = False):
         """
         Apply the specified fusion strategy to the loaded labels.
         Parameters:
@@ -43,7 +43,10 @@ class LabelFusionPipeline:
         """
         if not self.transformed_labels:
             raise ValueError("Transformed labels not loaded. Call load_transformed_labels() first.")
-        self.fused_label = fusion_strategy(self.transformed_labels)
+        if prob == True:
+            self.fused_label, self.fused_probabilities = fusion_strategy(self.transformed_labels)
+        else:
+            self.fused_label = fusion_strategy(self.transformed_labels)
         print("Applied fusion strategy.")
 
     def evaluate(self, ground_truth_path):
@@ -62,7 +65,7 @@ class LabelFusionPipeline:
         ground_truth = ground_truth_img.get_fdata()
 
         # Compute metrics
-        dice = compute_dice_coefficient(ground_truth, self.fused_label)
+        dice = calculate_dice_score(ground_truth, self.fused_label)
         return {"dice": dice}
 
     def save_fused_label(self, output_path):

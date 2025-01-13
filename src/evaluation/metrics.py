@@ -1,47 +1,121 @@
 import numpy as np
+import torch
+from monai.metrics import compute_hausdorff_distance
 from scipy.spatial.distance import directed_hausdorff
 
-def compute_dice_coefficient(seg1, seg2):
+def calculate_dice_score(img1_data, img2_data, ignore_background=True):
     """
-    Compute the Dice Similarity Coefficient (DSC) between two binary masks.
+    Calculate the Dice score between two NIfTI images.
+    
     Parameters:
-        seg1 (np.ndarray): Binary segmentation 1.
-        seg2 (np.ndarray): Binary segmentation 2.
+    nii_image1(np.ndarray:): first NIfTI image (e.g., ground truth).
+    nii_image2 (np.ndarray:): second NIfTI image (e.g., predicted labels).
+    ignore_background (bool): Whether to ignore the background label (default: True).
+    
     Returns:
-        float: Dice Similarity Coefficient.
-    """
-    intersection = np.sum((seg1 > 0) & (seg2 > 0))
-    return 2 * intersection / (np.sum(seg1 > 0) + np.sum(seg2 > 0))
+    dice_scores (dict): Dictionary of Dice scores for each label present in the images.
+    """    
+    # Ensure the two images have the same shape
+    if img1_data.shape != img2_data.shape:
+        raise ValueError("The two NIfTI images must have the same shape.")
+    
+    # Calculate the Dice score for each label
+    dice_scores = {}
+    labels = np.unique(img1_data)  # Find all unique labels in the first image
+    
+    for label in labels:
+        if label == 0 and ignore_background:
+            continue  # Skip background (assuming label 0 is background)
+        
+        # Create binary masks for the current label in both images
+        img1_mask = (img1_data == label)
+        img2_mask = (img2_data == label)
+        
+        # Calculate the intersection and union
+        intersection = np.sum(img1_mask & img2_mask)
+        union = np.sum(img1_mask) + np.sum(img2_mask)
+        
+        # Calculate Dice score (handle division by zero)
+        if union == 0:
+            dice_score = 1.0  # Perfect match if both masks are empty
+        else:
+            dice_score = (2. * intersection) / union
+        
+        # Store the Dice score for the current label
+        dice_scores[label] = dice_score
+    
+    return dice_scores
 
-def compute_hausdorff_distance(seg1, seg2):
+def calculate_hausdorff_distance(prediction, ground_truth, num_classes, include_background=False):
     """
-    Compute the Hausdorff Distance (HD) between two binary masks.
-    Parameters:
-        seg1 (np.ndarray): Binary segmentation 1.
-        seg2 (np.ndarray): Binary segmentation 2.
+    Compute the Hausdorff Distance for each class.
+
+    Args:
+        prediction (np.ndarray): Predicted segmentation (shape: [Z, Y, X]).
+        ground_truth (np.ndarray): Ground truth segmentation (shape: [Z, Y, X]).
+        num_classes (int): Number of classes.
+        include_background (bool): Whether to include background class in the computation.
+
     Returns:
-        float: Hausdorff Distance.
+        dict: Hausdorff distance for each class.
     """
-    coords1 = np.argwhere(seg1 > 0)
-    coords2 = np.argwhere(seg2 > 0)
+    hausdorff_distances = {}
 
-    if coords1.size == 0 or coords2.size == 0:
-        return float('inf')  # No overlapping elements
+    for class_id in range(num_classes):
+        if not include_background and class_id == 0:
+            continue
 
-    hd1 = directed_hausdorff(coords1, coords2)[0]
-    hd2 = directed_hausdorff(coords2, coords1)[0]
-    return max(hd1, hd2)
+        # Extract binary masks for the current class
+        pred_mask = (prediction == class_id)
+        gt_mask = (ground_truth == class_id)
 
-def compute_average_volume_difference(seg1, seg2, voxel_volume=1.0):
+        # Skip if either mask is empty
+        if not np.any(pred_mask) or not np.any(gt_mask):
+            hausdorff_distances[class_id] = np.nan  # Assign NaN for missing classes
+            continue
+
+        # Convert binary masks to point clouds
+        pred_points = np.argwhere(pred_mask)
+        gt_points = np.argwhere(gt_mask)
+
+        # Calculate directed Hausdorff distances
+        forward_hd = directed_hausdorff(pred_points, gt_points)[0]
+        backward_hd = directed_hausdorff(gt_points, pred_points)[0]
+
+        # Use the maximum of the forward and backward distances
+        hausdorff_distances[class_id] = max(forward_hd, backward_hd)
+
+    return hausdorff_distances
+
+def calculate_average_volumetric_difference(prediction, ground_truth, num_classes, include_background=False):
     """
-    Compute the Average Volume Difference (AVD) between two binary masks.
-    Parameters:
-        seg1 (np.ndarray): Binary segmentation 1.
-        seg2 (np.ndarray): Binary segmentation 2.
-        voxel_volume (float): Volume of a single voxel (default is 1.0).
+    Compute the Average Volumetric Difference (AVD) for each class.
+
+    Args:
+        prediction (np.ndarray): Predicted segmentation (shape: [Z, Y, X]).
+        ground_truth (np.ndarray): Ground truth segmentation (shape: [Z, Y, X]).
+        num_classes (int): Number of classes.
+        include_background (bool): Whether to include background class in the computation.
+
     Returns:
-        float: Average Volume Difference.
+        dict: AVD for each class.
     """
-    vol1 = np.sum(seg1 > 0) * voxel_volume
-    vol2 = np.sum(seg2 > 0) * voxel_volume
-    return abs(vol1 - vol2) / ((vol1 + vol2) / 2)
+    avd_scores = {}
+
+    for class_id in range(num_classes):
+        if not include_background and class_id == 0:
+            continue
+
+        # Calculate volume for the current class
+        pred_volume = np.sum(prediction == class_id)
+        gt_volume = np.sum(ground_truth == class_id)
+
+        # Skip if ground truth volume is zero
+        if gt_volume == 0:
+            avd_scores[class_id] = np.nan  # Assign NaN for missing classes
+            continue
+
+        # Compute AVD
+        avd_scores[class_id] = abs(pred_volume - gt_volume) / (gt_volume + 1e-6)
+
+    return avd_scores

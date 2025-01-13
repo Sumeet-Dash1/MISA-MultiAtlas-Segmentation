@@ -6,6 +6,10 @@ elastix/
 
 # Exclude ExpectationMaximization folder
 ExpectationMaximization/
+Results/
+results/
+csv/
+output/
 
 # Exclude common temporary files
 *.pyc
